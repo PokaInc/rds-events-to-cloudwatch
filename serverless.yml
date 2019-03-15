@@ -1,0 +1,91 @@
+service: rds-events-to-cloudwatch
+
+provider:
+  name: aws
+  region: ${env:AWS_DEFAULT_REGION}
+  runtime: python3.7
+  timeout: 30
+
+package:
+  exclude:
+  - "*/**"
+  include:
+  - "src/**"
+
+functions:
+  RdsEventToCloudWatch:
+    handler: src.rds_event.send_to_cloudwatch
+    role: RdsEventToCloudWatchRole
+    environment:
+      RDS_EVENT_LOG_GROUP: !Ref RdsEventLogGroup
+    events:
+    - sns:
+        arn:
+          Fn::Join:
+          - ":"
+          - - arn:aws:sns
+            - Ref: AWS::Region
+            - Ref: AWS::AccountId
+            - ${self:provider.stage}-${self:service}
+        topicName: ${self:provider.stage}-${self:service}
+
+resources:
+  Resources:
+    RdsEventLogGroup:
+      Type: AWS::Logs::LogGroup
+      DeletionPolicy: Retain
+
+    RdsEventToCloudWatchRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action: sts:AssumeRole
+        Policies:
+        - PolicyName: RdsEventLogGroupAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: "Allow"
+              Action:
+              - logs:PutLogEvents
+              - logs:DescribeLogStreams
+              Resource: !GetAtt RdsEventLogGroup.Arn
+        ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+    RdsEventTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:provider.stage}-${self:service}
+
+    RdsEventTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        PolicyDocument:
+          Version: '2008-10-17'
+          Statement:
+          - Sid: AWSRDSEvents
+            Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref RdsEventTopic
+        Topics:
+        - !Ref RdsEventTopic
+
+    RdsEventSubscription:
+      Type: AWS::RDS::EventSubscription
+      DependsOn: RdsEventTopicPolicy
+      Properties:
+        SnsTopicArn: !Ref RdsEventTopic
+
+  Outputs:
+    RdsEventLogGroup:
+      Value: !Ref RdsEventLogGroup
+      Export:
+        Name: ${self:provider.stage}-${self:service}:RdsEventLogGroup
