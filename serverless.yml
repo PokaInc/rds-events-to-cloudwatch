@@ -4,6 +4,7 @@ provider:
   name: aws
   region: ${env:AWS_DEFAULT_REGION}
   runtime: python3.7
+  stage: ${opt:stage, 'stage'}
   timeout: 30
 
 package:
