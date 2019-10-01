@@ -2,9 +2,10 @@ service: rds-events-to-cloudwatch
 
 provider:
   name: aws
-  region: ${env:AWS_DEFAULT_REGION}
+  stage: ${{env:ENVIRONMENT}}
+  region: ${{env:AWS_DEFAULT_REGION}}
+  variableSyntax: "\\${{([ ~:a-zA-Z0-9._@\\'\",\\-\\/\\(\\)]+?)}}"
   runtime: python3.7
-  stage: ${opt:stage, 'stage'}
   timeout: 30
 
 package:
@@ -27,8 +28,8 @@ functions:
           - - arn:aws:sns
             - Ref: AWS::Region
             - Ref: AWS::AccountId
-            - ${self:provider.stage}-${self:service}
-        topicName: ${self:provider.stage}-${self:service}
+            - ${{self:provider.stage}}-${{self:service}}
+        topicName: ${{self:provider.stage}}-${{self:service}}
 
 resources:
   Resources:
@@ -62,7 +63,7 @@ resources:
     RdsEventTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ${self:provider.stage}-${self:service}
+        TopicName: ${{self:provider.stage}}-${{self:service}}
 
     RdsEventTopicPolicy:
       Type: AWS::SNS::TopicPolicy
@@ -89,4 +90,4 @@ resources:
     RdsEventLogGroup:
       Value: !Ref RdsEventLogGroup
       Export:
-        Name: ${self:provider.stage}-${self:service}:RdsEventLogGroup
+        Name: ${{self:provider.stage}}-${{self:service}}:RdsEventLogGroup
