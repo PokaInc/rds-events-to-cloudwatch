@@ -73,10 +73,12 @@ resources:
           Statement:
           - Sid: AWSRDSEvents
             Effect: Allow
-            Principal:
-              Service: rds.amazonaws.com
+            Principal: "*"
             Action: sns:Publish
             Resource: !Ref RdsEventTopic
+            Condition:
+              ArnLike:
+                AWS:SourceArn: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*"
         Topics:
         - !Ref RdsEventTopic
 
