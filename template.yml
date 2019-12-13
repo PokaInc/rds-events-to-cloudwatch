@@ -81,4 +81,4 @@ Outputs:
   RdsEventLogGroup:
     Value: !Ref RdsEventLogGroup
     Export:
-      Name: !Sub '${Environment}-${AWS::StackName}:RdsEventLogGroup'
+      Name: !Sub '${Environment}-rds-events-to-cloudwatch:RdsEventLogGroup'
