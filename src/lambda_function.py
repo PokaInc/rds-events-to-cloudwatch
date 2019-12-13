@@ -8,7 +8,7 @@ log_group = os.environ['RDS_EVENT_LOG_GROUP']
 cloudwatch_logs_client = boto3.client('logs')
 
 
-def send_to_cloudwatch(event, _):
+def lambda_handler(event, _):
     next_sequence_token = None
     for event in event['Records']:
         message_source = event.get('EventSource')
