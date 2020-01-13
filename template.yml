@@ -1,0 +1,84 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  Environment:
+    Type: String
+
+Resources:
+  RdsEventToCloudWatch:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.7
+      CodeUri: src/
+      Handler: rds_event.send_to_cloudwatch
+      Role: !GetAtt RdsEventToCloudWatchRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          RDS_EVENT_LOG_GROUP: !Ref RdsEventLogGroup
+      Events:
+        SnsEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref RdsEventTopic
+
+  RdsEventLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+
+  RdsEventToCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: RdsEventLogGroupAccess
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            Resource: !GetAtt RdsEventLogGroup.Arn
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  RdsEventTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${Environment}-${AWS::StackName}'
+
+  RdsEventTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AWSRDSEvents
+          Effect: Allow
+          Principal: "*"
+          Action: sns:Publish
+          Resource: !Ref RdsEventTopic
+          Condition:
+            ArnLike:
+              AWS:SourceArn: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*"
+      Topics:
+      - !Ref RdsEventTopic
+
+  RdsEventSubscription:
+    Type: AWS::RDS::EventSubscription
+    DependsOn: RdsEventTopicPolicy
+    Properties:
+      SnsTopicArn: !Ref RdsEventTopic
+
+Outputs:
+  RdsEventLogGroup:
+    Value: !Ref RdsEventLogGroup
+    Export:
+      Name: !Sub '${Environment}-rds-events-to-cloudwatch:RdsEventLogGroup'
