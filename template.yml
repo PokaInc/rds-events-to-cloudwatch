@@ -10,7 +10,7 @@ Resources:
     Properties:
       Runtime: python3.7
       CodeUri: src/
-      Handler: lambda_function.lambda_handler
+      Handler: rds_event.send_to_cloudwatch
       Role: !GetAtt RdsEventToCloudWatchRole.Arn
       Timeout: 30
       Environment:
