@@ -3,7 +3,7 @@ OUT_DIR = dist
 TEMPLATE_FILE=template.yml
 AWS_DEFAULT_REGION ?= $(shell aws configure get region)
 CF_BUCKET=cloudformation-`aws sts get-caller-identity --output text --query 'Account'`-$(AWS_DEFAULT_REGION)
-ENV=
+ENV ?= $(shell aws configure get environment)
 STACK_NAME=rds-events-to-cloudwatch-$(ENV)
 
 # Check if variable has been defined, otherwise print custom error message
