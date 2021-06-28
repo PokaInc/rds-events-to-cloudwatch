@@ -25,51 +25,52 @@ Resources:
   RdsEventLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
   RdsEventToCloudWatchRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
       Policies:
-      - PolicyName: RdsEventLogGroupAccess
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - logs:PutLogEvents
-            - logs:DescribeLogStreams
-            Resource: !GetAtt RdsEventLogGroup.Arn
+        - PolicyName: RdsEventLogGroupAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: !GetAtt RdsEventLogGroup.Arn
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   RdsEventTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: !Sub '${Environment}-${AWS::StackName}'
+      TopicName: !Sub "${Environment}-${AWS::StackName}"
 
   RdsEventTopicPolicy:
     Type: AWS::SNS::TopicPolicy
     Properties:
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-        - Sid: AWSRDSEvents
-          Effect: Allow
-          Principal: "*"
-          Action: sns:Publish
-          Resource: !Ref RdsEventTopic
-          Condition:
-            ArnLike:
-              AWS:SourceArn: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*"
+          - Sid: AWSRDSEvents
+            Effect: Allow
+            Principal: "*"
+            Action: sns:Publish
+            Resource: !Ref RdsEventTopic
+            Condition:
+              ArnLike:
+                AWS:SourceArn: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*"
       Topics:
-      - !Ref RdsEventTopic
+        - !Ref RdsEventTopic
 
   RdsEventSubscription:
     Type: AWS::RDS::EventSubscription
@@ -81,4 +82,4 @@ Outputs:
   RdsEventLogGroup:
     Value: !Ref RdsEventLogGroup
     Export:
-      Name: !Sub '${Environment}-rds-events-to-cloudwatch:RdsEventLogGroup'
+      Name: !Sub "${Environment}-rds-events-to-cloudwatch:RdsEventLogGroup"
