@@ -21,6 +21,7 @@ check-bucket:
 	@aws s3api head-bucket --bucket $(CF_BUCKET) &> /dev/null || aws s3 mb s3://$(CF_BUCKET)
 
 package: check-bucket
+	@mkdir $(OUT_DIR) &> /dev/null || true
 	@sam package --s3-bucket $(CF_BUCKET) --template-file $(TEMPLATE_FILE) --output-template-file $(OUT_DIR)/$(TEMPLATE_FILE)
 
 lint-templates:
