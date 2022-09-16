@@ -1,4 +1,12 @@
-Transform: AWS::Serverless-2016-10-31
+Transform:
+  - AWS::Serverless-2016-10-31
+  - Name: DatadogServerless
+    Parameters:
+      stackName: !Ref "AWS::StackName"
+      pythonLayerVersion: 62
+      extensionLayerVersion: 28
+      site: "datadoghq.com"
+      apiKey: "{{resolve:secretsmanager:organization.secrets.common.datadog_api_key}}"
 
 Parameters:
   Environment:
