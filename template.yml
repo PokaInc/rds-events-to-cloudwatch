@@ -1,8 +1,26 @@
-Transform: AWS::Serverless-2016-10-31
+Transform:
+  - AWS::Serverless-2016-10-31
+  - Name: DatadogServerless
+    Parameters:
+      stackName: !Ref "AWS::StackName"
+      apiKey: "{{resolve:secretsmanager:organization.secrets.common.datadog_api_key}}"
+      service: "rds-events-to-cloudwatch"
+      pythonLayerVersion: !Ref DatadogPythonLayerVersion
+      extensionLayerVersion: !Ref DatadogExtensionLayerVersion
+      site: "datadoghq.com"
+      env: !Ref Environment
 
 Parameters:
   Environment:
     Type: String
+
+  DatadogPythonLayerVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: organization.parameters.common.python_layer_version
+
+  DatadogExtensionLayerVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: organization.parameters.common.datadog_extension_layer_version
 
 Resources:
   RdsEventToCloudWatch:
