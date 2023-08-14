@@ -8,7 +8,7 @@ Resources:
   RdsEventToCloudWatch:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: python3.10
+      Runtime: python3.9
       CodeUri: src/
       Handler: rds_event.send_to_cloudwatch
       Role: !GetAtt RdsEventToCloudWatchRole.Arn
